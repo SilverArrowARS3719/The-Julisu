@@ -1,10 +1,3 @@
-//
-//  ThemeManager.swift
-//  ChangeMakers PT
-//
-//  Created by RamSST on 17/8/26.
-//
-
 import SwiftUI
 import Combine
 

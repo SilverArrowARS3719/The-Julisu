@@ -1,17 +1,14 @@
-//
-//  Task.swift
-//  ChangeMakers PT
-//
-//  Created by RamSST on 16/8/26.
-//
-
 import Foundation
 
-struct Task: Identifiable, Codable {
+struct UserTask: Identifiable, Codable {
     var id = UUID()
     var name: String
-    var category: String   // "Studies" or "Personal"
-    var subject: String    // only used if category is "Studies"
+    var category: String
+    var subject: String
     var notes: String
     var isCompleted: Bool = false
+    var reflectionWhatDone: String = ""
+    var reflectionHowFelt: String = ""
+    var reflectionWhatLearned: String = ""
+    var deadline: Date? = nil
 }

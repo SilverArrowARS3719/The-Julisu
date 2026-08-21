@@ -1,54 +1,58 @@
-//
-//  TaskListViewModel.swift
-//  ChangeMakers PT
-//
-//  Created by RamSST on 16/8/26.
-//
-
 import Foundation
 import Combine
 
 class TaskListViewModel: ObservableObject {
-    @Published var tasks: [Task] = []
+    @Published var tasks: [UserTask] = []
     @Published var completedCount: Int = 0
     @Published var treeLevel: Int = 1
     @Published var tasksNeededForNextLevel: Int = 5
+    @Published var pulseTrigger: Bool = false
+    @Published var unlockedLevels: Set<Int> = []
 
-    func addTask(name: String, category: String, subject: String, notes: String) {
-        let newTask = Task(name: name, category: category, subject: subject, notes: notes)
-        tasks.append(newTask)
+    let tasksPerLevel: [Int: Int] = [
+        1: 5, 2: 6, 3: 7, 4: 8, 5: 9,
+        6: 10, 7: 12, 8: 15, 9: 10, 10: 20
+    ]
+
+    var treeProgress: CGFloat {
+        CGFloat(completedCount) / CGFloat(tasksNeededForNextLevel)
     }
 
-    func completeTask(_ task: Task) {
+    func addTask(name: String, category: String, subject: String, notes: String, deadline: Date?) {
+        let newTask = UserTask(name: name, category: category, subject: subject, notes: notes, deadline: deadline)
+        tasks.append(newTask)
+        NotificationManager.shared.scheduleReminder(for: newTask)
+    }
+
+    func finishCompletingTask(_ task: UserTask, whatDone: String, howFelt: String, whatLearned: String) {
         if let index = tasks.firstIndex(where: { $0.id == task.id }) {
-            if !tasks[index].isCompleted {
-                tasks[index].isCompleted = true
-                completedCount += 1
-                checkTreeGrowth()
-            }
+            tasks[index].isCompleted = true
+            tasks[index].reflectionWhatDone = whatDone
+            tasks[index].reflectionHowFelt = howFelt
+            tasks[index].reflectionWhatLearned = whatLearned
+
+            NotificationManager.shared.cancelReminder(for: task)
+
+            completedCount += 1
+            pulseTrigger.toggle()
+            checkTreeGrowth()
         }
     }
 
     func checkTreeGrowth() {
         if completedCount >= tasksNeededForNextLevel {
-            treeLevel += 1
-            completedCount = 0
-            tasksNeededForNextLevel += 5   // each level needs 5 more tasks than before
+            let finishedLevel = treeLevel
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                self.unlockedLevels.insert(finishedLevel)
+                self.treeLevel += 1
+                self.completedCount = 0
+                self.tasksNeededForNextLevel = self.tasksPerLevel[self.treeLevel] ?? (self.tasksNeededForNextLevel + 5)
+            }
         }
     }
 
-    func treeImageName() -> String {
-        switch treeLevel {
-        case 1:
-            return "tree_sapling"
-        case 2:
-            return "tree_young"
-        case 3:
-            return "tree_mature"
-        case 4:
-            return "tree_flowering"
-        default:
-            return "tree_ancient"
-        }
+    // Clears only completed tasks - does not touch uncompleted ones or tree progress
+    func clearCompletedTasks() {
+        tasks.removeAll { $0.isCompleted }
     }
 }

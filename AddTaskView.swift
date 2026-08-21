@@ -1,10 +1,3 @@
-//
-//  AddTaskView.swift
-//  ChangeMakers PT
-//
-//  Created by RamSST on 16/8/26.
-//
-
 import SwiftUI
 
 struct AddTaskView: View {
@@ -15,6 +8,8 @@ struct AddTaskView: View {
     @State private var category = "Studies"
     @State private var subject = "Math"
     @State private var notes = ""
+    @State private var hasDeadline = false
+    @State private var deadline = Date()
 
     let categories = ["Studies", "Personal"]
     let subjects = ["Math", "Science", "English", "History"]
@@ -45,16 +40,21 @@ struct AddTaskView: View {
                     }
                 }
 
+                Section(header: Text("Deadline")) {
+                    Toggle("Set a deadline", isOn: $hasDeadline)
+                    if hasDeadline {
+                        DatePicker("Due", selection: $deadline, displayedComponents: [.date, .hourAndMinute])
+                    }
+                }
+
                 Section(header: Text("Notes")) {
-                    TextField("Add notes (e.g. deadline)", text: $notes)
+                    TextField("Add notes", text: $notes)
                 }
             }
             .navigationTitle("New Task")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
+                    Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
@@ -62,7 +62,8 @@ struct AddTaskView: View {
                             name: taskName,
                             category: category,
                             subject: category == "Studies" ? subject : "",
-                            notes: notes
+                            notes: notes,
+                            deadline: hasDeadline ? deadline : nil
                         )
                         dismiss()
                     }
